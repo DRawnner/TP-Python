@@ -9,6 +9,9 @@ def test():
     return "Estás ligado!"
 
 
+# --------------- ADICIONAR REGISTOS À TABELA ---------------------
+
+
 @app.route('/adduser', methods=['POST'])
 def add_user():
     conn = mysql.connect()
@@ -38,6 +41,36 @@ def add_user():
         return 'Teste'
 
 
+
+@app.route('/addcasa', methods=['POST'])
+def add_casa():
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    try:
+        _json = request.json
+        _num_divisoes = _json['num_divisoes']
+        _garagem = _json['garagem']
+
+        if _num_divisoes and _garagem and request.method == 'POST':
+            sql = "INSERT INTO casa(num_divisoes, garagem) VALUES (%s, %s)"
+            data = (_num_divisoes, _garagem)
+            cursor.execute(sql, data)
+            conn.commit()
+            resp = jsonify('Casa adicionada com sucesso!')
+            resp.status_code = 200
+            return resp
+        else:
+            resp1 = jsonify('Ocorreu um erro ao adicionar a Casa!')
+            return resp1
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ------------------ VER TODOS OS REGISTOS DA TABELA ----------
+
 @app.route('/users')
 def users():
     conn = mysql.connect()
@@ -54,7 +87,7 @@ def users():
         cursor.close()
         conn.close()
 
-#
+
 @app.route('/user/<int:id>')
 def user(id):
     conn = mysql.connect()
@@ -73,24 +106,63 @@ def user(id):
         conn.close()
 
 
-@app.route('/update', methods=['POST'])
-def update_user():
+@app.route('/casas')
+def casas():
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM casa")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+# -------------- VER REGISTO EXPECIFICO --------------------------------
+
+
+@app.route('/casa/<int:id>')
+def casa(id):
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    try:
+
+        cursor.execute("SELECT * FROM casa WHERE id_casa=%s", id)
+        row = cursor.fetchone()
+        resp = jsonify(row)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# -------------------------- ALTERAR REGISTO ---------------------
+
+
+@app.route('/updatecasa', methods=['POST'])
+def update_casa():
     conn = mysql.connect()
     cursor = conn.cursor()
     try:
         _json = request.json
-        _user_id = _json['user_id']
-        _user_name = _json['user_name']
-        _user_email = _json['user_email']
-        _user_password = _json['user_password']
-        # validate the received values
-        if _user_name and _user_email and _user_password and _user_id and request.method == 'POST':
-            sql = "UPDATE tbl_user SET user_name=%s, user_email=%s, user_password=%s WHERE user_id=%s"
-            data = (_user_name, _user_email, _user_password, _user_id,)
+        _id_casa = _json['id_casa']
+        _num_divisoes = _json['num_divisoes']
+        _garagem = _json['garagem']
+        # validar valores recebidos
+        if _num_divisoes and _garagem and _id_casa and request.method == 'POST':
+            sql = "UPDATE casa SET _num_divisoes=%s, garagem=%s WHERE id_casa=%s"
+            data = (_num_divisoes, _garagem, _id_casa,)
 
             cursor.execute(sql, data)
             conn.commit()
-            resp = jsonify('User updated successfully!')
+            resp = jsonify('Registo alterado com sucesso')
             resp.status_code = 200
             return resp
         else:
@@ -101,23 +173,24 @@ def update_user():
         cursor.close()
         conn.close()
 
-#
-# @app.route('/delete/<int:id>')
-# def delete_user(id):
-#     conn = pymysql.connect()
-#     cursor = conn.cursor()
-#     try:
-#
-#         cursor.execute("DELETE FROM tbl_user WHERE user_id=%s", (id,))
-#         conn.commit()
-#         resp = jsonify('User deleted successfully!')
-#         resp.status_code = 200
-#         return resp
-#     except Exception as e:
-#         print(e)
-#     finally:
-#         cursor.close()
-#         conn.close()
+# ----------------- APAGAR REGISTO ----------------------
+
+@app.route('/delete/<int:id>')
+def delete_casa(id):
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    try:
+
+        cursor.execute("DELETE FROM casa WHERE id_casa=%s", (id,))
+        conn.commit()
+        resp = jsonify('registo apagado com sucesso!')
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @app.errorhandler(404)
